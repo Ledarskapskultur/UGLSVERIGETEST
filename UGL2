@@ -1,0 +1,95 @@
+# streamlit_sms_bokning.py
+
+import streamlit as st
+import pandas as pd
+import requests
+from requests.auth import HTTPBasicAuth
+from openpyxl import load_workbook
+from datetime import datetime
+import shutil
+import os
+
+# ----- Inställningar för +46elks -----
+ELKS_USERNAME = "uc9ebbbf8541d29fcbbd04c310a174f69"
+ELKS_PASSWORD = "C92D0F039B88E7961EC9B72B17C3BAE8"
+SMS_SENDER = "UGLSVERIGE"  # Max 11 tecken, inga mellanslag
+
+# ----- Sökvägar till Excel-filer (anpassat för Streamlit Cloud) -----
+KUNDFIL = "kunddata.xlsx"
+
+# ----- Funktion för att skicka SMS -----
+def send_sms(to, message):
+    url = "https://api.46elks.com/a1/sms"
+    payload = {
+        "from": SMS_SENDER,
+        "to": to,
+        "message": message
+    }
+    response = requests.post(
+        url,
+        data=payload,
+        auth=HTTPBasicAuth(ELKS_USERNAME, ELKS_PASSWORD)
+    )
+    if response.status_code == 200:
+        return True, response.json()
+    else:
+        return False, response.text
+
+# ----- Funktion för att spara kunduppgifter till Excel -----
+def spara_till_excel(data):
+    ny_rad = pd.DataFrame([data])
+    if os.path.exists(KUNDFIL):
+        book = load_workbook(KUNDFIL)
+        writer = pd.ExcelWriter(KUNDFIL, engine='openpyxl')
+        writer.book = book
+        writer.sheets = {ws.title: ws for ws in book.worksheets}
+        startrow = writer.sheets["Kunder"].max_row
+        ny_rad.to_excel(writer, sheet_name="Kunder", index=False, header=False, startrow=startrow)
+        writer.save()
+    else:
+        ny_rad.to_excel(KUNDFIL, sheet_name="Kunder", index=False)
+
+# ----- Streamlitgränssnittet -----
+st.title("UGL Sverige – Bokningsbekräftelse")
+
+st.markdown("""
+Ange kundens uppgifter nedan. När du klickar på **Bekräfta bokning** kommer ett SMS skickas till kunden och uppgifterna sparas i Excel.
+""")
+
+datum = datetime.today().strftime("%Y-%m-%d")
+namn = st.text_input("Namn")
+telefon = st.text_input("Telefonnummer", placeholder="+4670...")
+email = st.text_input("E-post")
+valda_veckor = st.text_input("Valda veckor", placeholder="t.ex. 19-23, 32")
+tidigare_kund = st.selectbox("Tidigare kund?", ["", "Ja", "Nej"])
+orgnr = st.text_input("Organisationsnummer")
+fakturaadress = st.text_input("Fakturaadress")
+bolagsnamn = st.text_input("Bolagsnamn")
+personnummer = st.text_input("Personnummer (valfritt)")
+kommunikation = ""
+
+if st.button("Bekräfta bokning"):
+    if namn and telefon:
+        sms_text = f"Hej {namn}! Tack för din intresseanmälan till UGL. Vi har noterat veckorna: {valda_veckor}. Vi hör av oss! /UGL Sverige"
+        success, result = send_sms(telefon, sms_text)
+        if success:
+            kunddata = {
+                "Datum": datum,
+                "Namn": namn,
+                "Telefon": telefon,
+                "E-post": email,
+                "Valda veckor": valda_veckor,
+                "Tidigare kund": tidigare_kund,
+                "Organisationsnummer": orgnr,
+                "Fakturaadress": fakturaadress,
+                "Bolagsnamn": bolagsnamn,
+                "Personnummer": personnummer,
+                "Kommunikation": sms_text
+            }
+            spara_till_excel(kunddata)
+            st.success("SMS skickat och uppgifter sparade!")
+            st.json(result)
+        else:
+            st.error(f"Fel vid SMS: {result}")
+    else:
+        st.warning("Fyll i både namn och telefonnummer.")
