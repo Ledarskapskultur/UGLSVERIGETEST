@@ -1,33 +1,32 @@
+# UGL Sverige, webbplats
 
-# UGL Sverige – Bokningssystem med SMS & Excel
+Next.js (App Router) med statisk generering. Allt innehåll finns i HTML vid första svaret, så att Google och AI-crawlers ser hela sajten.
 
-Detta Streamlit-projekt låter dig:
-- Mata in kunduppgifter
-- Skicka boknings-SMS via 46elks
-- Spara all data till Excel (OneDrive-synkad)
-- Automatisk daglig backup
+## Struktur
 
-## Installation
+- `src/data/kurser.ts`: alla kursveckor (pipe-format, samma som tidigare `kurser-data.js`) plus de 12 kursorterna. Byt ut mot databas när arrangörsflödet är på plats.
+- `src/data/innehall.ts`: texter som återanvänds (FAQ, veckan, målgrupp, effekter).
+- `src/app/*`: sidorna. `ugl/[ort]` genererar en sida per kursort.
+- `src/app/api/kontakt/route.ts`: tar emot alla formulär.
+- `next.config.ts`: 301 från gamla ortsidor utan kurs till /kurser.
+- `public/assets/`: lägg in `ugl-hero.webp` och `ugl-grupp.webp` från nuvarande sajt här (hero-bilden används som bakgrund på startsidan).
 
-1. Klona eller ladda ner projektet.
-2. Skapa en Python-miljö och installera beroenden:
+## Formulär
 
-```bash
-pip install streamlit pandas requests openpyxl
+Formulären sparar inget själva. Sätt minst en av dessa miljövariabler i Vercel:
+
+- `FORM_WEBHOOK_URL`: alla formulär skickas som JSON hit (Make, Zapier, Supabase edge function, egen endpoint).
+- `RESEND_API_KEY` (+ valfritt `FORM_TO_EMAIL`, `FORM_FROM_EMAIL`): mejl till kontakt@uglsverige.store via Resend.
+
+Utan någon av dem loggas inskick bara i Vercels funktionslogg.
+
+## Kör lokalt
+
+```
+npm install
+npm run dev
 ```
 
-3. Uppdatera filvägarna i `streamlit_sms_bokning.py` om du använder annan struktur.
-4. Kör appen med:
+## Uppdatera kursveckor
 
-```bash
-streamlit run streamlit_sms_bokning.py
-```
-
-## Filer
-
-- `streamlit_sms_bokning.py` – Huvudappen
-- `README.md` – Den här filen
-
-## Kontakt
-
-Byggt av Carl-Fredrik Zetterman
+Redigera raderna i `src/data/kurser.ts` och driftsätt. Sidorna byggs om automatiskt en gång per dygn (ISR) så att passerade veckor försvinner.
