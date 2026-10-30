@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 
-export type FormTyp = "boka" | "intresse" | "bevaka" | "ring" | "nyhetsbrev" | "foretag" | "kommun" | "omdome";
+export type FormTyp = "boka" | "intresse" | "bevaka" | "ring" | "nyhetsbrev" | "foretag" | "kommun" | "omdome" | "webinar";
 
 type Props = {
   typ: FormTyp;
