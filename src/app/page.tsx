@@ -29,7 +29,7 @@ export default function Start() {
           <p className="lead">Sveriges mest använda ledarskapsutbildning.</p>
           <div className="hero__actions">
             <span className="small">Öppna kurser över hela landet.</span>
-            <Link href="/kurser" className="btn btn--light">Se kursdatum</Link>
+            <Link href="/kurser" className="btn btn--accent">Se kursdatum</Link>
           </div>
         </div>
       </section>
@@ -65,7 +65,7 @@ export default function Start() {
                   <span className="card__n">{v.n}</span>
                   <h3 className="h3">{v.titel}</h3>
                   <p className="muted">{v.text}</p>
-                  <div className="card mt-1" style={{ background: "var(--dark)", padding: 16 }}>
+                  <div className="card card--dark mt-1" style={{ background: "var(--dark)", padding: 16 }}>
                     <span className="card__n">Det betyder för dig</span>
                     <p style={{ fontSize: "0.9375rem" }}>{v.for}</p>
                   </div>
